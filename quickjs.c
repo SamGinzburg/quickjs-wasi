@@ -1277,6 +1277,10 @@ static void js_trigger_gc(JSRuntime *rt, size_t size)
     }
 }
 
+static void *js_def_realloc(JSMallocState *s, void *ptr, size_t size);
+static void *js_def_malloc(JSMallocState *s, size_t size);
+static void js_def_free(JSMallocState *s, void *ptr);
+
 static size_t js_malloc_usable_size_unknown(const void *ptr)
 {
     return 0;
@@ -1284,22 +1288,22 @@ static size_t js_malloc_usable_size_unknown(const void *ptr)
 
 void *js_malloc_rt(JSRuntime *rt, size_t size)
 {
-    return rt->mf.js_malloc(&rt->malloc_state, size);
+    return js_def_malloc(&rt->malloc_state, size);
 }
 
 void js_free_rt(JSRuntime *rt, void *ptr)
 {
-    rt->mf.js_free(&rt->malloc_state, ptr);
+    js_def_free(&rt->malloc_state, ptr);
 }
 
 void *js_realloc_rt(JSRuntime *rt, void *ptr, size_t size)
 {
-    return rt->mf.js_realloc(&rt->malloc_state, ptr, size);
+    return js_def_realloc(&rt->malloc_state, ptr, size);
 }
 
 size_t js_malloc_usable_size_rt(JSRuntime *rt, const void *ptr)
 {
-    return rt->mf.js_malloc_usable_size(ptr);
+    return 0;
 }
 
 void *js_mallocz_rt(JSRuntime *rt, size_t size)
@@ -1605,7 +1609,7 @@ JSRuntime *JS_NewRuntime2(const JSMallocFunctions *mf, void *opaque)
     ms.opaque = opaque;
     ms.malloc_limit = -1;
 
-    rt = mf->js_malloc(&ms, sizeof(JSRuntime));
+    rt = js_def_malloc(&ms, sizeof(JSRuntime));
     if (!rt)
         return NULL;
     memset(rt, 0, sizeof(*rt));
@@ -6576,7 +6580,7 @@ static JSValue JS_ThrowError2(JSContext *ctx, JSErrorEnum error_num,
     char buf[256];
     JSValue obj, ret;
 
-    vsnprintf(buf, sizeof(buf), fmt, ap);
+    //vsnprintf(buf, sizeof(buf), fmt, ap);
     obj = JS_NewObjectProtoClass(ctx, ctx->native_error_proto[error_num],
                                  JS_CLASS_ERROR);
     if (unlikely(JS_IsException(obj))) {
@@ -6587,9 +6591,11 @@ static JSValue JS_ThrowError2(JSContext *ctx, JSErrorEnum error_num,
                                JS_NewString(ctx, buf),
                                JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
     }
+    /*
     if (add_backtrace) {
         build_backtrace(ctx, obj, NULL, 0, 0);
     }
+    */
     ret = JS_Throw(ctx, obj);
     return ret;
 }
@@ -6776,16 +6782,7 @@ static JSValue JS_ThrowTypeErrorInvalidClass(JSContext *ctx, int class_id)
 
 static no_inline __exception int __js_poll_interrupts(JSContext *ctx)
 {
-    JSRuntime *rt = ctx->rt;
-    ctx->interrupt_counter = JS_INTERRUPT_COUNTER_INIT;
-    if (rt->interrupt_handler) {
-        if (rt->interrupt_handler(rt, rt->interrupt_opaque)) {
-            /* XXX: should set a specific flag to avoid catching */
-            JS_ThrowInternalError(ctx, "interrupted");
-            JS_SetUncatchableError(ctx, ctx->rt->current_exception, TRUE);
-            return -1;
-        }
-    }
+    // This is only used for SIGINT CTRL+C, which we don't need
     return 0;
 }
 
