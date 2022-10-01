@@ -293,7 +293,7 @@ void cr_init(CharRange *cr, void *mem_opaque, DynBufReallocFunc *realloc_func)
 
 void cr_free(CharRange *cr)
 {
-    cr->realloc_func(cr->mem_opaque, cr->points, 0);
+    cr_default_realloc(cr->mem_opaque, cr->points, 0);
 }
 
 int cr_realloc(CharRange *cr, int size)
@@ -303,8 +303,8 @@ int cr_realloc(CharRange *cr, int size)
     
     if (size > cr->size) {
         new_size = max_int(size, cr->size * 3 / 2);
-        new_buf = cr->realloc_func(cr->mem_opaque, cr->points,
-                                   new_size * sizeof(cr->points[0]));
+        new_buf = cr_default_realloc(cr->mem_opaque, cr->points,
+                                     new_size * sizeof(cr->points[0]));
         if (!new_buf)
             return -1;
         cr->points = new_buf;

@@ -134,6 +134,9 @@ typedef enum {
 /* contains the rounding mode and number of exponents bits */
 typedef uint32_t bf_flags_t;
 
+extern void *js_bf_realloc(void *opaque, void *ptr, size_t size);
+
+//static void *js_bf_realloc(void *opaque, void *ptr, size_t size);
 typedef void *bf_realloc_func_t(void *opaque, void *ptr, size_t size);
 
 typedef struct {
@@ -199,7 +202,7 @@ void bf_clear_cache(bf_context_t *s);
 
 static inline void *bf_realloc(bf_context_t *s, void *ptr, size_t size)
 {
-    return s->realloc_func(s->realloc_opaque, ptr, size);
+    return js_bf_realloc(s->realloc_opaque, ptr, size);
 }
 
 /* 'size' must be != 0 */

@@ -109,6 +109,7 @@ static JSContext *JS_NewCustomContext(JSRuntime *rt)
     ctx = JS_NewContext(rt);
     if (!ctx)
         return NULL;
+/*
 #ifdef CONFIG_BIGNUM
     if (bignum_ext) {
         JS_AddIntrinsicBigFloat(ctx);
@@ -117,6 +118,7 @@ static JSContext *JS_NewCustomContext(JSRuntime *rt)
         JS_EnableBignumExt(ctx, TRUE);
     }
 #endif
+*/
     /* system modules */
     js_init_module_std(ctx, "std");
     js_init_module_os(ctx, "os");

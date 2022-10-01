@@ -1317,7 +1317,7 @@ void *js_mallocz_rt(JSRuntime *rt, size_t size)
 
 #ifdef CONFIG_BIGNUM
 /* called by libbf */
-static void *js_bf_realloc(void *opaque, void *ptr, size_t size)
+void *js_bf_realloc(void *opaque, void *ptr, size_t size)
 {
     JSRuntime *rt = opaque;
     return js_realloc_rt(rt, ptr, size);
@@ -9027,13 +9027,14 @@ int JS_DefineProperty(JSContext *ctx, JSValueConst this_obj,
     JSShapeProperty *prs;
     JSProperty *pr;
     int mask, res;
-
+    printf("debug: ctx: %p, this_obj: %p, prop: %p\n", (void*)ctx, (void*)this_obj, (void*)prop);
     if (JS_VALUE_GET_TAG(this_obj) != JS_TAG_OBJECT) {
         JS_ThrowTypeErrorNotAnObject(ctx);
         return -1;
     }
     p = JS_VALUE_GET_OBJ(this_obj);
 
+ printf("redo prop update\n");
  redo_prop_update:
     prs = find_own_property(&pr, p, prop);
     if (prs) {
@@ -33693,8 +33694,8 @@ static JSValue JS_EvalInternal(JSContext *ctx, JSValueConst this_obj,
     if (unlikely(!ctx->eval_internal)) {
         return JS_ThrowTypeError(ctx, "eval is not supported");
     }
-    return ctx->eval_internal(ctx, this_obj, input, input_len, filename,
-                              flags, scope_idx);
+    return __JS_EvalInternal(ctx, this_obj, input, input_len, filename,
+                             flags, scope_idx);
 }
 
 static JSValue JS_EvalObject(JSContext *ctx, JSValueConst this_obj,

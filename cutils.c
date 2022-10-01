@@ -111,7 +111,7 @@ int dbuf_realloc(DynBuf *s, size_t new_size)
         size = s->allocated_size * 3 / 2;
         if (size > new_size)
             new_size = size;
-        new_buf = s->realloc_func(s->opaque, s->buf, new_size);
+        new_buf = dbuf_default_realloc(s->opaque, s->buf, new_size);
         if (!new_buf) {
             s->error = TRUE;
             return -1;
@@ -196,7 +196,7 @@ void dbuf_free(DynBuf *s)
     /* we test s->buf as a fail safe to avoid crashing if dbuf_free()
        is called twice */
     if (s->buf) {
-        s->realloc_func(s->opaque, s->buf, 0);
+        dbuf_default_realloc(s->opaque, s->buf, 0);
     }
     memset(s, 0, sizeof(*s));
 }
